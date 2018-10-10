@@ -28,6 +28,8 @@ async def RequestUrl(config, init):
                 _type = SocksVer.SOCKS5
             elif config.Proxy_type.lower() == "socks4":
                 _type = SocksVer.SOCKS4
+            elif config.Proxy_type.lower() == 'http':
+                _type = 'Hello'
             else:
                 print("Error: Proxy types allowed are: socks5 and socks4.")
                 sys.exit(1)
@@ -54,7 +56,7 @@ async def RequestUrl(config, init):
             response = await Request(_url, connector=_connector)
     elif config.TwitterSearch:
         _url = await url.Search(config, init)
-        response = await Request(_url, options=_connector)
+        response = await Request(_url, options=_connector, proxy=config.True_proxy)
     else:
         if config.Following:
             _url = await url.Following(config.Username, init)
@@ -79,19 +81,19 @@ async def MobileRequest(url, **options):
     async with aiohttp.ClientSession(headers=ua) as session:
         return await Response(session, url)
 
-async def Request(url, **options):
+async def Request(url, proxy='', **options):
     #loggin.info("[<] " + str(datetime.now()) + ':: get+Request')
     connector = options.get("_connector")
     if connector:
-        async with aiohttp.ClientSession(connector=connector) as session:
-            return await Response(session, url)
+        async with aiohttp.ClientSession() as session:
+            return await Response(session, url, proxy=proxy)
     async with aiohttp.ClientSession() as session:
-        return await Response(session, url)
+        return await Response(session, url, proxy=proxy)
 
-async def Response(session, url):
+async def Response(session, url, proxy=''):
     #loggin.info("[<] " + str(datetime.now()) + ':: get+Response')
     with timeout(30):
-        async with session.get(url, ssl=False) as response:
+        async with session.get(url, ssl=False, proxy=proxy) as response:
             return await response.text()
 
 async def Username(_id):
